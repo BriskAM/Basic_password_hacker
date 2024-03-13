@@ -15,7 +15,9 @@ address = (host, int(port))
 try:
     with socket.socket() as sock:
         sock.connect(address)
-        login_list = file_line_iterator("/Users/akshitmehta/PycharmProjects/Password Hacker with Python/Password Hacker with Python/task/Step.txt")
+        login_list = file_line_iterator("/Users/akshitmehta/PycharmProjects/"
+                                        "Password Hacker with Python/Password Hacker with Python/"
+                                        "task/hacking/Step.txt")
         found = False
 
         try:
