@@ -39,6 +39,7 @@ try:
                         password += chr(ascii_code)
                         break
                     elif response["result"] == "Connection success!":
+                        password += chr(ascii_code)
                         found = True
                         break
                 if found:
